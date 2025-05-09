@@ -11,13 +11,117 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getStreamURL = `-- name: GetStreamURL :one
-SELECT stream_url FROM videos WHERE Video_id=$1
+const getStreamurl = `-- name: GetStreamurl :one
+SELECT Name, Stream_url FROM videos WHERE User_id=$1 AND Video_id=$2
 `
 
-func (q *Queries) GetStreamURL(ctx context.Context, videoID pgtype.UUID) (pgtype.Text, error) {
-	row := q.db.QueryRow(ctx, getStreamURL, videoID)
-	var stream_url pgtype.Text
-	err := row.Scan(&stream_url)
-	return stream_url, err
+type GetStreamurlParams struct {
+	UserID  pgtype.UUID
+	VideoID pgtype.UUID
+}
+
+type GetStreamurlRow struct {
+	Name      string
+	StreamUrl pgtype.Text
+}
+
+func (q *Queries) GetStreamurl(ctx context.Context, arg GetStreamurlParams) (GetStreamurlRow, error) {
+	row := q.db.QueryRow(ctx, getStreamurl, arg.UserID, arg.VideoID)
+	var i GetStreamurlRow
+	err := row.Scan(&i.Name, &i.StreamUrl)
+	return i, err
+}
+
+const getVideos = `-- name: GetVideos :many
+SELECT Name, Stream_url FROM videos WHERE User_id=$1
+`
+
+type GetVideosRow struct {
+	Name      string
+	StreamUrl pgtype.Text
+}
+
+func (q *Queries) GetVideos(ctx context.Context, userID pgtype.UUID) ([]GetVideosRow, error) {
+	rows, err := q.db.Query(ctx, getVideos, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetVideosRow
+	for rows.Next() {
+		var i GetVideosRow
+		if err := rows.Scan(&i.Name, &i.StreamUrl); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const ifVideoExists = `-- name: IfVideoExists :one
+SELECT EXISTS (SELECT 1 FROM videos WHERE Video_id=$1) AS value_exists
+`
+
+func (q *Queries) IfVideoExists(ctx context.Context, videoID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, ifVideoExists, videoID)
+	var value_exists bool
+	err := row.Scan(&value_exists)
+	return value_exists, err
+}
+
+const insertFinalVideoDetails = `-- name: InsertFinalVideoDetails :one
+UPDATE videos SET Video_url=$1 WHERE Video_id=$2 RETURNING Name, Video_id
+`
+
+type InsertFinalVideoDetailsParams struct {
+	VideoUrl pgtype.Text
+	VideoID  pgtype.UUID
+}
+
+type InsertFinalVideoDetailsRow struct {
+	Name    string
+	VideoID pgtype.UUID
+}
+
+func (q *Queries) InsertFinalVideoDetails(ctx context.Context, arg InsertFinalVideoDetailsParams) (InsertFinalVideoDetailsRow, error) {
+	row := q.db.QueryRow(ctx, insertFinalVideoDetails, arg.VideoUrl, arg.VideoID)
+	var i InsertFinalVideoDetailsRow
+	err := row.Scan(&i.Name, &i.VideoID)
+	return i, err
+}
+
+const insertInitialDetails = `-- name: InsertInitialDetails :one
+INSERT INTO videos(User_id,Video_id,Name,Type,Resolution, Created_at) VALUES ($1,$2,$3,$4,$5,$6)
+RETURNING Name,Video_id
+`
+
+type InsertInitialDetailsParams struct {
+	UserID     pgtype.UUID
+	VideoID    pgtype.UUID
+	Name       string
+	Type       string
+	Resolution int32
+	CreatedAt  pgtype.Timestamp
+}
+
+type InsertInitialDetailsRow struct {
+	Name    string
+	VideoID pgtype.UUID
+}
+
+func (q *Queries) InsertInitialDetails(ctx context.Context, arg InsertInitialDetailsParams) (InsertInitialDetailsRow, error) {
+	row := q.db.QueryRow(ctx, insertInitialDetails,
+		arg.UserID,
+		arg.VideoID,
+		arg.Name,
+		arg.Type,
+		arg.Resolution,
+		arg.CreatedAt,
+	)
+	var i InsertInitialDetailsRow
+	err := row.Scan(&i.Name, &i.VideoID)
+	return i, err
 }

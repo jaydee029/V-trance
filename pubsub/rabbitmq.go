@@ -53,7 +53,7 @@ func (pb *PubSub) DeclareAndBind(exchange, queueName, key string, simpleQueueTyp
 	}
 
 	table := amqp.Table{}
-	table["x-dead-letter-exchange"] = "SeeALie_dlx"
+	table["x-dead-letter-exchange"] = "trance_dlx"
 	pubqueue, err := pubchannel.QueueDeclare(queueName,
 		simpleQueueType == DurableQueue,
 		simpleQueueType != DurableQueue,

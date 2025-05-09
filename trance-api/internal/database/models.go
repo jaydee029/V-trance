@@ -8,13 +8,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Video struct {
-	UserID    pgtype.UUID
+type Job struct {
+	JobID     pgtype.UUID
 	VideoID   pgtype.UUID
 	Name      string
 	Type      string
-	Height    int32
-	Width     int32
-	VideoUrl  pgtype.Text
-	StreamUrl pgtype.Text
+	Options   []byte
+	Status    string
+	CreatedAt pgtype.Timestamp
+}
+
+type Video struct {
+	UserID     pgtype.UUID
+	VideoID    pgtype.UUID
+	Name       string
+	Type       string
+	Resolution int32
+	VideoUrl   pgtype.Text
+	StreamUrl  pgtype.Text
+	CreatedAt  pgtype.Timestamp
 }

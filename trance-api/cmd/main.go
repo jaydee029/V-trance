@@ -66,7 +66,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	handler := api.New(minioClient, bucketName, pathprefix, queries, logger)
+	handler := api.New(minioClient, bucketName, pathprefix, queries, dbcon, logger)
 
 	port := os.Getenv("PORT")
 
@@ -76,8 +76,10 @@ func main() {
 
 	s.Post("/upload-Url", handler.GetUploadUrl)
 	s.Post("/notifyUpload", handler.NotifyUpload)
-	s.Get("/fetchVideo", handler.GetVideo)
-	s.Get("/videos", handler.GetVideos)
+	s.Get("/getVideos", handler.GetVideos)
+	s.Get("/jobStatus/{jobid}", handler.GetStatus)
+	s.Get("/fetchVideo/{videoid}", handler.GetStreamUrl)
+	s.Get("/downloadVideo/{videoid}", handler.GetDownloadUrl)
 
 	sermux := middleware.Corsmiddleware(r)
 

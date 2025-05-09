@@ -1,13 +1,13 @@
 -- +goose Up
 CREATE TABLE videos(
-    user_id uuid NOT NULL,
+    User_id uuid NOT NULL,
     Video_id uuid PRIMARY KEY,
     Name TEXT NOT NULL,
     Type VARCHAR(25) NOT NULL,
-    Height INT NOT NULL,
-    Width INT NOT NULL,
-    video_url TEXT, 
-    stream_url TEXT
+    Resolution INT NOT NULL,
+    Video_url TEXT, 
+    Stream_url TEXT,
+    Created_at TIMESTAMP NOT NULL
 );
 
 -- +goose Down

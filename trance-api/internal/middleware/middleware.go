@@ -4,6 +4,10 @@ import (
 	"net/http"
 )
 
+type contextKey string
+
+const UserIDKey contextKey = "userID"
+
 func Corsmiddleware(app http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

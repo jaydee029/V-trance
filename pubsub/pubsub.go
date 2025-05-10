@@ -2,6 +2,7 @@ package pubsub
 
 import amqp "github.com/rabbitmq/amqp091-go"
 
+//v1.1.0
 type PubSub struct {
 	conn *amqp.Connection
 }

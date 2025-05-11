@@ -35,17 +35,17 @@ func (q *Queries) FetchVideo(ctx context.Context, videoID pgtype.UUID) (FetchVid
 }
 
 const insertVideoUrl = `-- name: InsertVideoUrl :one
-UPDATE videos SET Video_url=$1 WHERE Video_id=$2
+UPDATE videos SET Stream_url=$1 WHERE Video_id=$2
 RETURNING Video_id
 `
 
 type InsertVideoUrlParams struct {
-	VideoUrl pgtype.Text
-	VideoID  pgtype.UUID
+	StreamUrl pgtype.Text
+	VideoID   pgtype.UUID
 }
 
 func (q *Queries) InsertVideoUrl(ctx context.Context, arg InsertVideoUrlParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, insertVideoUrl, arg.VideoUrl, arg.VideoID)
+	row := q.db.QueryRow(ctx, insertVideoUrl, arg.StreamUrl, arg.VideoID)
 	var video_id pgtype.UUID
 	err := row.Scan(&video_id)
 	return video_id, err

@@ -53,7 +53,7 @@ func (h *Handler) ProcessVideo(job *Job) error {
 		videourlstr := "https://snowy-unit-44da.dhruvj797.workers.dev/" + h.Pathprefix + job.UserId.String() + "/hls/" + job.VideoId.String() + "/master.m3u8"
 		videourl := utils.ToText(videourlstr)
 		_, err = h.DB.InsertVideoUrl(context.Background(), database.InsertVideoUrlParams{
-			VideoUrl: videourl,
+			StreamUrl: videourl,
 		})
 		if err != nil {
 			h.logger.Info("Error uploading HLS URL to the db", zap.Error(err))
@@ -74,7 +74,7 @@ func (h *Handler) ProcessVideo(job *Job) error {
 		videourlstr := "https://snowy-unit-44da.dhruvj797.workers.dev/" + h.Pathprefix + job.UserId.String() + "/transcode" + job.VideoId.String()
 		videourl := utils.ToText(videourlstr)
 		_, err = h.DB.InsertVideoUrl(context.Background(), database.InsertVideoUrlParams{
-			VideoUrl: videourl,
+			StreamUrl: videourl,
 		})
 		if err != nil {
 			h.logger.Info("Error uploading URL to the db", zap.Error(err))

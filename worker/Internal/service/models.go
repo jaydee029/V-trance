@@ -21,8 +21,25 @@ type Options struct {
 }
 
 type Job struct {
-	Type     string
-	VideoId  pgtype.UUID
-	VideoUrl string
-	Options  Options
+	Type              string
+	VideoId           pgtype.UUID
+	UserId            pgtype.UUID
+	InitialResolution int
+	VideoUrl          string
+	Options           Options
+}
+
+type Transcoding struct {
+}
+
+type Dimension struct {
+	Height int
+	Width  int
+}
+
+type Rendition struct {
+	Name    string
+	Width   int
+	Height  int
+	Bitrate int // in kbps
 }

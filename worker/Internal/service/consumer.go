@@ -84,15 +84,34 @@ func (h *Handler) Jobprocesser(val any) error {
 		h.logger.Info("error fetching the video from the db:", zap.Error(err))
 	}
 
-	_ = &Job{
-		Type:     jobDetails.Type,
-		VideoId:  jobDetails.VideoID,
-		VideoUrl: videoDetails.VideoUrl.String,
-		Options:  options,
+	job := &Job{
+		Type:              jobDetails.Type,
+		VideoId:           jobDetails.VideoID,
+		UserId:            videoDetails.UserID,
+		VideoUrl:          videoDetails.VideoUrl.String,
+		InitialResolution: int(videoDetails.Resolution),
+		Options:           options,
 	}
 
-	_, err = h.DB.SetStatusProcessing(context.Background(), database.SetStatusProcessingParams{
+	_, err = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
 		Status: JobKeyProcessing,
+		JobID:  jobid,
+	})
+	if err != nil {
+		h.logger.Info("error setting status to processing:", zap.Error(err))
+	}
+
+	err = h.ProcessVideo(job)
+
+	if err != nil {
+		_, _ = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+			Status: JobKeyRejected,
+			JobID:  jobid,
+		})
+		return err
+	}
+	_, _ = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+		Status: JobKeyCompleted,
 		JobID:  jobid,
 	})
 

@@ -39,18 +39,18 @@ func (q *Queries) FetchJob(ctx context.Context, arg FetchJobParams) (FetchJobRow
 	return i, err
 }
 
-const setStatusProcessing = `-- name: SetStatusProcessing :one
+const setStatusJob = `-- name: SetStatusJob :one
 UPDATE jobs SET Status=$1 WHERE Job_id=$2
 RETURNING job_id, video_id, name, type, options, status, created_at
 `
 
-type SetStatusProcessingParams struct {
+type SetStatusJobParams struct {
 	Status string
 	JobID  pgtype.UUID
 }
 
-func (q *Queries) SetStatusProcessing(ctx context.Context, arg SetStatusProcessingParams) (Job, error) {
-	row := q.db.QueryRow(ctx, setStatusProcessing, arg.Status, arg.JobID)
+func (q *Queries) SetStatusJob(ctx context.Context, arg SetStatusJobParams) (Job, error) {
+	row := q.db.QueryRow(ctx, setStatusJob, arg.Status, arg.JobID)
 	var i Job
 	err := row.Scan(
 		&i.JobID,

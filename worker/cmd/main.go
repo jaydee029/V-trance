@@ -13,14 +13,36 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jaydee029/V-trance/pubsub"
 	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 func main() {
-	godotenv.Load(".env")
+	godotenv.Load("../.env")
 
 	logger, _ := zap.NewProduction()
+
+	endpoint := os.Getenv("ENDPOINT")
+	if endpoint == "" {
+		logger.Fatal("Object storage endpoint not set")
+	}
+
+	accessKeyID := os.Getenv("ACCESSKEYID")
+	if accessKeyID == "" {
+		logger.Fatal("AccessKeyID not set")
+	}
+
+	secretAccessKey := os.Getenv("SECRETACCESSKEY")
+	if secretAccessKey == "" {
+		logger.Fatal("SecretAccessKey not set")
+	}
+
+	bucketName := os.Getenv("BUCKET")
+	if bucketName == "" {
+		logger.Fatal("Bucket name not set")
+	}
 
 	dbURL := os.Getenv("DB_CONN")
 	if dbURL == "" {
@@ -48,7 +70,18 @@ func main() {
 
 	exchange := "vtrance-direct"
 	key := "jobs"
-	h := service.New(queries, pb, logger, exchange, key)
+	useSSL := true
+	pathprefix := "users/"
+
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: useSSL,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	h := service.New(queries, pb, logger, minioClient, bucketName, pathprefix, exchange, key)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

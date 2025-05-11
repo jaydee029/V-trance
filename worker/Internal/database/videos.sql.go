@@ -12,17 +12,41 @@ import (
 )
 
 const fetchVideo = `-- name: FetchVideo :one
-SELECT Name,Video_url FROM videos WHERE Video_id=$1
+SELECT User_id,Name,Video_url,Resolution FROM videos WHERE Video_id=$1
 `
 
 type FetchVideoRow struct {
-	Name     string
-	VideoUrl pgtype.Text
+	UserID     pgtype.UUID
+	Name       string
+	VideoUrl   pgtype.Text
+	Resolution int32
 }
 
 func (q *Queries) FetchVideo(ctx context.Context, videoID pgtype.UUID) (FetchVideoRow, error) {
 	row := q.db.QueryRow(ctx, fetchVideo, videoID)
 	var i FetchVideoRow
-	err := row.Scan(&i.Name, &i.VideoUrl)
+	err := row.Scan(
+		&i.UserID,
+		&i.Name,
+		&i.VideoUrl,
+		&i.Resolution,
+	)
 	return i, err
+}
+
+const insertVideoUrl = `-- name: InsertVideoUrl :one
+UPDATE videos SET Video_url=$1 WHERE Video_id=$2
+RETURNING Video_id
+`
+
+type InsertVideoUrlParams struct {
+	VideoUrl pgtype.Text
+	VideoID  pgtype.UUID
+}
+
+func (q *Queries) InsertVideoUrl(ctx context.Context, arg InsertVideoUrlParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, insertVideoUrl, arg.VideoUrl, arg.VideoID)
+	var video_id pgtype.UUID
+	err := row.Scan(&video_id)
+	return video_id, err
 }

@@ -5,6 +5,7 @@ import (
 	"V-trance/trance-api/internal/utils"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -63,6 +64,7 @@ func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "error inserting details in the db: "+err.Error())
 		return
 	}
+	url := fmt.Sprintf("%s://%s%s?%s", scheme, host, path, query)
 
 	respondWithJson(w, http.StatusAccepted, UploadUrlResponse{
 		Name:      Response.Name,

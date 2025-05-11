@@ -1,8 +1,6 @@
 package api
 
 import (
-	"net/url"
-
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -40,7 +38,7 @@ type UploadUrlInput struct {
 type UploadUrlResponse struct {
 	Name      string      `json:"name"`
 	Videoid   pgtype.UUID `json:"videoid"`
-	UploadUrl *url.URL    `json:"uploadurl"`
+	UploadUrl string      `json:"uploadurl"`
 }
 
 type GetVideosResponse struct {

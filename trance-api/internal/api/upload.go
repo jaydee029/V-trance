@@ -64,12 +64,12 @@ func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "error inserting details in the db: "+err.Error())
 		return
 	}
-	url := fmt.Sprintf("%s://%s%s?%s", scheme, host, path, query)
+	url := fmt.Sprintf("%s://%s%s?%s", presignedURL.Scheme, presignedURL.Host, presignedURL.Path, presignedURL.RawQuery)
 
 	respondWithJson(w, http.StatusAccepted, UploadUrlResponse{
 		Name:      Response.Name,
 		Videoid:   Response.VideoID,
-		UploadUrl: presignedURL,
+		UploadUrl: url,
 	})
 
 }

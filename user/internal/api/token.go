@@ -94,7 +94,7 @@ func (cfg *Handler) VerifyRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cfg *Handler) VerifyUser(w http.ResponseWriter, r *http.Response) {
+func (cfg *Handler) VerifyUser(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.BearerHeader(r.Header)
 
 	if err != nil {
@@ -117,7 +117,9 @@ func (cfg *Handler) VerifyUser(w http.ResponseWriter, r *http.Response) {
 		return
 	}
 
-	respondWithJson(w, http.StatusAccepted, UserRes{
-		ID: userid,
-	})
+	// 	respondWithJson(w, http.StatusAccepted, UserRes{
+	// 		ID: userid,
+	// 	})
+	w.Header().Set("X-User-ID", userid.String())
+	w.WriteHeader(http.StatusOK)
 }

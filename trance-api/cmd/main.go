@@ -4,6 +4,7 @@ import (
 	"V-trance/trance-api/internal/api"
 	"V-trance/trance-api/internal/database"
 	"V-trance/trance-api/internal/middleware"
+	"V-trance/trance-api/internal/publisher"
 	"context"
 	"log"
 	"net/http"
@@ -15,11 +16,12 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 func main() {
-	godotenv.Load(".env")
+	godotenv.Load("../.env")
 
 	logger, _ := zap.NewProduction()
 
@@ -55,6 +57,19 @@ func main() {
 	}
 
 	queries := database.New(dbcon)
+
+	rabbitConnString := os.Getenv("RMQ_CONN")
+	if rabbitConnString == "" {
+		logger.Fatal("rabbitmq connection string not set")
+	}
+
+	conn, err := amqp.Dial(rabbitConnString)
+	if err != nil {
+		log.Fatalf("could not connect to RabbitMQ: %v", err)
+	}
+	pbclient := publisher.New(conn)
+	Exchange := "vtrance-direct"
+	key := "jobs"
 	useSSL := true
 	pathprefix := "users/"
 
@@ -65,8 +80,12 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	err = publisher.InitBroker(conn, Exchange)
+	if err != nil {
+		logger.Fatal("Failed to initialize message broker:", zap.Error(err))
+	}
 
-	handler := api.New(minioClient, bucketName, pathprefix, queries, dbcon, logger)
+	handler := api.New(minioClient, bucketName, pathprefix, queries, dbcon, logger, pbclient, Exchange, key)
 
 	port := os.Getenv("PORT")
 
@@ -74,12 +93,12 @@ func main() {
 	s := chi.NewRouter()
 	r.Mount("/tranceapi", s)
 
-	s.Post("/upload-Url", handler.GetUploadUrl)
+	s.Post("/upload-Url", handler.GetUploadUrl) // upload url
 	s.Post("/notifyUpload", handler.NotifyUpload)
 	s.Get("/getVideos", handler.GetVideos)
-	s.Get("/jobStatus/{jobid}", handler.GetStatus)
-	s.Get("/fetchVideo/{videoid}", handler.GetStreamUrl)
-	s.Get("/downloadVideo/{videoid}", handler.GetDownloadUrl)
+	s.Get("/jobStatus/{jobid}", handler.GetStatus)            // long polling
+	s.Get("/fetchVideo/{videoid}", handler.GetStreamUrl)      // stream url
+	s.Get("/downloadVideo/{videoid}", handler.GetDownloadUrl) // download url
 
 	sermux := middleware.Corsmiddleware(r)
 

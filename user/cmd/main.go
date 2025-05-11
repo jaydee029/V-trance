@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	godotenv.Load(".env")
+	godotenv.Load("../.env")
 
 	logger, _ := zap.NewProduction()
 
@@ -45,12 +45,13 @@ func main() {
 
 	r := chi.NewRouter()
 	s := chi.NewRouter()
-	r.Mount("user", s)
+	r.Mount("/user", s)
 
 	s.Post("/signup", h.CreateUser)
 	s.Post("/login", h.UserLogin)
 	s.Post("/refresh", h.VerifyRefresh)
 	s.Post("/revoke", h.RevokeToken)
+	s.Get("/verify", h.VerifyUser)
 
 	sermux := middleware.Corsmiddleware(r)
 

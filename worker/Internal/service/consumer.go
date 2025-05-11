@@ -1,0 +1,100 @@
+package service
+
+import (
+	"V-trance/worker/Internal/database"
+	"context"
+	"encoding/json"
+	"errors"
+	"sync"
+
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jaydee029/V-trance/pubsub"
+	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
+)
+
+func (h *Handler) EventListner(ctx context.Context, wg *sync.WaitGroup) {
+
+	sem := semaphore.NewWeighted(10)
+	//var wg sync.WaitGroup
+
+	err := h.Pb.SubscribeGob(h.Exchange, "jobs_queue", h.key, pubsub.DurableQueue, func(val any) pubsub.Acktype {
+
+		if err := sem.Acquire(ctx, 1); err != nil {
+			h.logger.Info("Failed to acquire semaphore: ", zap.Error(err))
+			return pubsub.NackRequeue
+		}
+
+		wg.Add(1)
+		go func(task any) {
+			defer sem.Release(1)
+			defer wg.Done()
+
+			if err := h.Jobprocesser(task); err != nil {
+				h.logger.Info("Failed to process task: ", zap.Error(err))
+				// You could implement retry logic or dead-lettering here
+			}
+		}(val)
+
+		return pubsub.Ack
+	})
+
+	if err != nil {
+		h.logger.Info("Couldnt subscribe to the queue:", zap.Error(err))
+	}
+	//wg.Wait()
+}
+
+func (h *Handler) Jobprocesser(val any) error {
+	m, ok := val.(map[string]interface{})
+	if !ok {
+		h.logger.Info("failed to convert val to map")
+		return errors.New("failed to convert val to map")
+	}
+
+	// Manually map to your struct
+	task := &Task{
+		VideoID: m["Videoid"].(string),
+		JobID:   m["Jobid"].(string),
+	}
+
+	var jobid pgtype.UUID
+
+	err := jobid.Scan(task.JobID)
+
+	if err != nil {
+		h.logger.Info("error converting jobid to pgtype", zap.Error(err))
+		return err
+	}
+
+	jobDetails, err := h.DB.FetchJob(context.Background(), database.FetchJobParams{
+		JobID:  jobid,
+		Status: JobKeyInitiated,
+	})
+	if err != nil {
+		h.logger.Info("error fetching the job from the db:", zap.Error(err))
+	}
+	var options Options
+	err = json.Unmarshal(jobDetails.Options, &options)
+	if err != nil {
+		h.logger.Info("error unmarshalling options:", zap.Error(err))
+	}
+	videoDetails, err := h.DB.FetchVideo(context.Background(), jobDetails.VideoID)
+	if err != nil {
+		h.logger.Info("error fetching the video from the db:", zap.Error(err))
+	}
+
+	_ = &Job{
+		Type:     jobDetails.Type,
+		VideoId:  jobDetails.VideoID,
+		VideoUrl: videoDetails.VideoUrl.String,
+		Options:  options,
+	}
+
+	_, err = h.DB.SetStatusProcessing(context.Background(), database.SetStatusProcessingParams{
+		Status: JobKeyProcessing,
+		JobID:  jobid,
+	})
+
+	return nil
+}

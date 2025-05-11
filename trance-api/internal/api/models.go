@@ -21,7 +21,7 @@ type options struct {
 
 type NotifyUploadInput struct {
 	Videoid pgtype.UUID `json:"videoid"`
-	Type    string      `json:"type"`
+	Type    string      `json:"type"` // all caps TRANSCODING STREAMING
 	Options *options    `json:"options"`
 }
 
@@ -33,7 +33,7 @@ type NotifyUploadResponse struct {
 
 type UploadUrlInput struct {
 	Name       string `json:"Name"`
-	Type       string `json:"type"`
+	Type       string `json:"type"` // type of the video
 	Resolution int    `json:"resolution"`
 }
 
@@ -61,4 +61,9 @@ type GetStatusResponse struct {
 	Name    string      `json:"name"`
 	Videoid pgtype.UUID `json:"videoid"`
 	Status  string      `json:"status"`
+}
+
+type Task struct {
+	Videoid string
+	Jobid   string
 }

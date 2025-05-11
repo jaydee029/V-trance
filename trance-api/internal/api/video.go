@@ -2,7 +2,6 @@ package api
 
 import (
 	"V-trance/trance-api/internal/database"
-	"V-trance/trance-api/internal/middleware"
 	"context"
 	"net/http"
 	"net/url"
@@ -15,7 +14,7 @@ import (
 
 func (h *Handler) GetVideos(w http.ResponseWriter, r *http.Request) {
 
-	useridstr := r.Context().Value(middleware.UserIDKey).(string)
+	useridstr := r.Header.Get("X-User-ID")
 
 	var userid pgtype.UUID
 	err := userid.Scan(useridstr)
@@ -61,7 +60,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 			return
 		case <-timeout:
 			respondWithJson(w, http.StatusNoContent, GetStatusResponse{
-				Status: "Request timed out",
+				Status: JobKeyProcessing,
 			})
 			return
 		case <-ticker.C:
@@ -93,7 +92,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetStreamUrl(w http.ResponseWriter, r *http.Request) {
 
-	useridstr := r.Context().Value(middleware.UserIDKey).(string)
+	useridstr := r.Header.Get("X-User-ID")
 	videoidstr := chi.URLParam(r, "videoid")
 
 	var videoid pgtype.UUID
@@ -126,7 +125,7 @@ func (h *Handler) GetStreamUrl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetDownloadUrl(w http.ResponseWriter, r *http.Request) {
-	useridstr := r.Context().Value(middleware.UserIDKey).(string)
+	useridstr := r.Header.Get("X-User-ID")
 	videoidstr := chi.URLParam(r, "videoid")
 
 	var videoid pgtype.UUID

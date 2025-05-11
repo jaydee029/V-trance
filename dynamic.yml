@@ -1,0 +1,20 @@
+http:
+  routers:
+    mainapi-router:
+      rule: "PathPrefix(`/tranceapi`)"
+      entryPoints: ["web"]
+      service: tranceapi-service
+      middlewares: ["auth-middleware"]
+
+  middlewares:
+    auth-middleware:
+      forwardAuth:
+        address: "http://localhost:8081/user/verify"
+        trustForwardHeader: true
+        authResponseHeaders: ["X-User-ID"]
+
+  services:
+    tranceapi-service:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:8082/"

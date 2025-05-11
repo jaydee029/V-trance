@@ -2,7 +2,6 @@ package api
 
 import (
 	"V-trance/trance-api/internal/database"
-	"V-trance/trance-api/internal/middleware"
 	"V-trance/trance-api/internal/utils"
 	"context"
 	"encoding/json"
@@ -16,7 +15,7 @@ import (
 
 func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
 
-	useridstr := r.Context().Value(middleware.UserIDKey).(string)
+	useridstr := r.Header.Get("X-User-ID")
 	decoder := json.NewDecoder(r.Body)
 	params := UploadUrlInput{}
 	err := decoder.Decode(&params)
@@ -75,7 +74,7 @@ func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 
-	useridstr := r.Context().Value(middleware.UserIDKey).(string)
+	useridstr := r.Header.Get("X-User-ID")
 	decoder := json.NewDecoder(r.Body)
 	params := NotifyUploadInput{}
 	err := decoder.Decode(&params)
@@ -161,6 +160,17 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tx = nil
+
+	task := &Task{
+		Videoid: job.VideoID.String(),
+		Jobid:   job.JobID.String(),
+	}
+
+	err = h.Pbclient.PublishTask(h.Exchange, h.Key, task, h.logger)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "coudn't publish the event:"+err.Error())
+		return
+	}
 
 	respondWithJson(w, http.StatusAccepted, NotifyUploadResponse{
 		Name:    job.Name,

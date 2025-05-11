@@ -5,6 +5,11 @@ http:
       entryPoints: ["web"]
       service: tranceapi-service
       middlewares: ["auth-middleware"]
+    
+    user-router:  # 👈 new router for /user
+      rule: "PathPrefix(`/user`)"
+      entryPoints: ["web"]
+      service: user-service
 
   middlewares:
     auth-middleware:
@@ -18,3 +23,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://localhost:8082/"
+    
+    user-service:  # 👈 your actual user service
+      loadBalancer:
+        servers:
+          - url: "http://localhost:8081/"

@@ -129,7 +129,7 @@ func (cfg *Handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		user, err = cfg.DB.GetUserEmail(r.Context(), params.Email)
+		user, err = cfg.DB.GetUserUsername(r.Context(), params.Username)
 
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, err.Error())

@@ -45,7 +45,7 @@ func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userid pgtype.UUID
-	err = videoid.Scan(useridstr)
+	err = userid.Scan(useridstr)
 	if err != nil {
 		h.logger.Info("Error setting user UUID:", zap.Error(err))
 		return

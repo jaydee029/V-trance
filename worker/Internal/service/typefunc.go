@@ -52,11 +52,17 @@ func CreateTranscoding(job *Job, inputpath, outputDir string) error {
 		"720":  {720, 1280},
 		"1080": {1080, 1920},
 	}
+	var ffmpegCodecMap = map[string]string{
+		"H.264": "libx264",
+		"H.265": "libx265",
+		"VP9":   "libvpx-vp9",
+		"AV1":   "libaom-av1",
+	}
 
 	args := []string{
 		"-i", inputpath,
 		"-vf", fmt.Sprintf("scale=w=%d:h=%d", resolution[job.Options.Resolution].Width, resolution[job.Options.Resolution].Height),
-		"-c:v", job.Options.Codec,
+		"-c:v", ffmpegCodecMap[job.Options.Codec],
 		"-c:a", "aac",
 		OutputPath + job.Options.Output,
 	}

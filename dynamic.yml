@@ -4,12 +4,17 @@ http:
       rule: "PathPrefix(`/tranceapi`)"
       entryPoints: ["web"]
       service: tranceapi-service
-      middlewares: ["auth-middleware"]
+      middlewares: 
+        - auth-middleware
+        - corsHeaders
     
     user-router:  # 👈 new router for /user
       rule: "PathPrefix(`/user`)"
       entryPoints: ["web"]
       service: user-service
+      middlewares:
+        - corsHeaders
+
 
   middlewares:
     auth-middleware:
@@ -17,6 +22,20 @@ http:
         address: "http://localhost:8081/user/verify"
         trustForwardHeader: true
         authResponseHeaders: ["X-User-ID"]
+    
+    corsHeaders:
+      headers:
+        accessControlAllowOriginList:
+          - "http://localhost:3000"  # 🔁 change to your frontend origin
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+        accessControlAllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        accessControlAllowCredentials: true
 
   services:
     tranceapi-service:

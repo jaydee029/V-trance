@@ -16,6 +16,11 @@ type options struct {
 	Codec      *string `json:"codec"`
 	Resolution *string `json:"resolution"`
 }
+type Options struct {
+	Output     string
+	Codec      string
+	Resolution string
+}
 
 type NotifyUploadInput struct {
 	Videoid pgtype.UUID `json:"videoid"`
@@ -64,4 +69,28 @@ type GetStatusResponse struct {
 type Task struct {
 	Videoid string
 	Jobid   string
+}
+
+type Job struct {
+	Type              string
+	VideoId           pgtype.UUID
+	UserId            pgtype.UUID
+	InitialResolution int
+	VideoUrl          string
+	Options           Options
+}
+
+// type Transcoding struct {
+// }
+
+type Dimension struct {
+	Height int
+	Width  int
+}
+
+type Rendition struct {
+	Name    string
+	Width   int
+	Height  int
+	Bitrate int // in kbps
 }

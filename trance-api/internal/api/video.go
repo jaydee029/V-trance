@@ -144,7 +144,7 @@ func (h *Handler) GetDownloadUrl(w http.ResponseWriter, r *http.Request) {
 
 	reqParams := make(url.Values)
 	expiry := time.Second * 60 * 15
-	objectName := h.Pathprefix + useridstr + "/" + videoidstr
+	objectName := h.Pathprefix + useridstr + "/transcode/" + videoidstr
 	presignedURL, err := h.B2Client.PresignedGetObject(context.Background(), h.Bucket, objectName, expiry, reqParams)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error generating donwload url: "+err.Error())

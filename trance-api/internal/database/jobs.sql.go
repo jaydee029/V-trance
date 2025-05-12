@@ -47,6 +47,34 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (CreateJob
 	return i, err
 }
 
+const fetchJob = `-- name: FetchJob :one
+SELECT Video_id,Name,Type,Options From jobs WHERE Job_id=$1 AND Status=$2
+`
+
+type FetchJobParams struct {
+	JobID  pgtype.UUID
+	Status string
+}
+
+type FetchJobRow struct {
+	VideoID pgtype.UUID
+	Name    string
+	Type    string
+	Options []byte
+}
+
+func (q *Queries) FetchJob(ctx context.Context, arg FetchJobParams) (FetchJobRow, error) {
+	row := q.db.QueryRow(ctx, fetchJob, arg.JobID, arg.Status)
+	var i FetchJobRow
+	err := row.Scan(
+		&i.VideoID,
+		&i.Name,
+		&i.Type,
+		&i.Options,
+	)
+	return i, err
+}
+
 const fetchStatus = `-- name: FetchStatus :one
 SELECT Name, Video_id, Status FROM jobs WHERE Job_id=$1
 `
@@ -61,5 +89,30 @@ func (q *Queries) FetchStatus(ctx context.Context, jobID pgtype.UUID) (FetchStat
 	row := q.db.QueryRow(ctx, fetchStatus, jobID)
 	var i FetchStatusRow
 	err := row.Scan(&i.Name, &i.VideoID, &i.Status)
+	return i, err
+}
+
+const setStatusJob = `-- name: SetStatusJob :one
+UPDATE jobs SET Status=$1 WHERE Job_id=$2
+RETURNING job_id, video_id, name, type, options, status, created_at
+`
+
+type SetStatusJobParams struct {
+	Status string
+	JobID  pgtype.UUID
+}
+
+func (q *Queries) SetStatusJob(ctx context.Context, arg SetStatusJobParams) (Job, error) {
+	row := q.db.QueryRow(ctx, setStatusJob, arg.Status, arg.JobID)
+	var i Job
+	err := row.Scan(
+		&i.JobID,
+		&i.VideoID,
+		&i.Name,
+		&i.Type,
+		&i.Options,
+		&i.Status,
+		&i.CreatedAt,
+	)
 	return i, err
 }

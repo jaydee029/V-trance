@@ -4,7 +4,6 @@ import (
 	"V-trance/worker/Internal/database"
 	"context"
 	"encoding/json"
-	"errors"
 	"sync"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -46,18 +45,26 @@ func (h *Handler) EventListner(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (h *Handler) Jobprocesser(val any) error {
-	m, ok := val.(map[string]interface{})
-	if !ok {
-		h.logger.Info("failed to convert val to map")
-		return errors.New("failed to convert val to map")
-	}
+	// m, ok := val.(map[string]interface{})
+	// if !ok {
+	// 	h.logger.Info("failed to convert val to map")
+	// 	return errors.New("failed to convert val to map")
+	// }
 
-	// Manually map to your struct
-	task := &Task{
-		VideoID: m["Videoid"].(string),
-		JobID:   m["Jobid"].(string),
+	// // Manually map to your struct
+	// task := &Task{
+	// 	VideoID: val.Videoid, //m["Videoid"].(string),
+	// 	JobID:   m["Jobid"].(string),
+	// }
+	// task, ok := val.(*Task)
+	// if !ok {
+	// 	h.logger.Info("failed to convert val to *Task")
+	// 	return errors.New("failed to convert val to *Task")
+	// }
+	task := Task{
+		VideoID: "string",
+		JobID:   "Jobid",
 	}
-
 	var jobid pgtype.UUID
 
 	err := jobid.Scan(task.JobID)

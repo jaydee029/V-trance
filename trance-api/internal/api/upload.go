@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -91,6 +92,13 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusNotFound, "couldnt find video details")
 		return
 	}
+	// var videoid pgtype.UUID
+
+	// err = videoid.Scan(params.Videoid)
+	// if err != nil {
+	// 	h.logger.Info("Error setting video UUID:", zap.Error(err))
+	// 	return
+	// }
 
 	tx, err := h.DBPool.Begin(r.Context())
 	if err != nil {
@@ -112,6 +120,7 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 	videoprefixpgtype := utils.ToText(videoprefix)
 
 	video_details, err := qtx.InsertFinalVideoDetails(r.Context(), database.InsertFinalVideoDetailsParams{
+		VideoID:  params.Videoid,
 		VideoUrl: videoprefixpgtype,
 	})
 
@@ -173,6 +182,60 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "coudn't publish the event:"+err.Error())
 		return
 	}
+	go func(task *Task) {
+		jobDetails, err := h.DB.FetchJob(context.Background(), database.FetchJobParams{
+			JobID:  jobid,
+			Status: JobKeyInitiated,
+		})
+		if err != nil {
+			h.logger.Info("error fetching the job from the db:", zap.Error(err))
+		}
+		var opts Options
+		err = json.Unmarshal(jobDetails.Options, &opts)
+		if err != nil {
+			h.logger.Info("error unmarshalling options:", zap.Error(err))
+		}
+		videoDetails, err := h.DB.FetchVideo(context.Background(), jobDetails.VideoID)
+		if err != nil {
+			h.logger.Info("error fetching the video from the db:", zap.Error(err))
+		}
+
+		jobd := &Job{
+			Type:              jobDetails.Type,
+			VideoId:           jobDetails.VideoID,
+			UserId:            videoDetails.UserID,
+			VideoUrl:          videoDetails.VideoUrl.String,
+			InitialResolution: int(videoDetails.Resolution),
+			Options:           opts,
+		}
+
+		_, err = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+			Status: JobKeyProcessing,
+			JobID:  jobid,
+		})
+		if err != nil {
+			h.logger.Info("error setting status to processing:", zap.Error(err))
+		}
+
+		err = h.ProcessVideo(jobd)
+
+		if err != nil {
+			h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+				Status: JobKeyRejected,
+				JobID:  jobid,
+			})
+			log.Printf("error processing video:%v", err)
+			return
+			//return err
+		}
+		h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+			Status: JobKeyCompleted,
+			JobID:  jobid,
+		})
+		return
+	}(task)
+
+	//return nil
 
 	respondWithJson(w, http.StatusAccepted, NotifyUploadResponse{
 		Name:    job.Name,

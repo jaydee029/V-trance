@@ -6,6 +6,7 @@ import (
 	"V-trance/trance-api/internal/middleware"
 	"V-trance/trance-api/internal/publisher"
 	"context"
+	"encoding/gob"
 	"log"
 	"net/http"
 	"os"
@@ -67,6 +68,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not connect to RabbitMQ: %v", err)
 	}
+	gob.Register(&api.Task{})
+
 	pbclient := publisher.New(conn)
 	Exchange := "vtrance-direct"
 	key := "jobs"

@@ -4,6 +4,7 @@ import (
 	"V-trance/worker/Internal/database"
 	"V-trance/worker/Internal/service"
 	"context"
+	"encoding/gob"
 	"log"
 	"os"
 	"os/signal"
@@ -67,6 +68,7 @@ func main() {
 		log.Fatalf("could not connect to RabbitMQ: %v", err)
 	}
 	pb := pubsub.New(conn)
+	gob.Register(&service.Task{})
 
 	exchange := "vtrance-direct"
 	key := "jobs"

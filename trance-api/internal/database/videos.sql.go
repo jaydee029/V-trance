@@ -11,6 +11,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const fetchVideo = `-- name: FetchVideo :one
+SELECT User_id,Name,Video_url,Resolution FROM videos WHERE Video_id=$1
+`
+
+type FetchVideoRow struct {
+	UserID     pgtype.UUID
+	Name       string
+	VideoUrl   pgtype.Text
+	Resolution int32
+}
+
+func (q *Queries) FetchVideo(ctx context.Context, videoID pgtype.UUID) (FetchVideoRow, error) {
+	row := q.db.QueryRow(ctx, fetchVideo, videoID)
+	var i FetchVideoRow
+	err := row.Scan(
+		&i.UserID,
+		&i.Name,
+		&i.VideoUrl,
+		&i.Resolution,
+	)
+	return i, err
+}
+
 const getStreamurl = `-- name: GetStreamurl :one
 SELECT Name, Stream_url FROM videos WHERE User_id=$1 AND Video_id=$2
 `
@@ -124,4 +147,21 @@ func (q *Queries) InsertInitialDetails(ctx context.Context, arg InsertInitialDet
 	var i InsertInitialDetailsRow
 	err := row.Scan(&i.Name, &i.VideoID)
 	return i, err
+}
+
+const insertVideoUrl = `-- name: InsertVideoUrl :one
+UPDATE videos SET Stream_url=$1 WHERE Video_id=$2
+RETURNING Video_id
+`
+
+type InsertVideoUrlParams struct {
+	StreamUrl pgtype.Text
+	VideoID   pgtype.UUID
+}
+
+func (q *Queries) InsertVideoUrl(ctx context.Context, arg InsertVideoUrlParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, insertVideoUrl, arg.StreamUrl, arg.VideoID)
+	var video_id pgtype.UUID
+	err := row.Scan(&video_id)
+	return video_id, err
 }

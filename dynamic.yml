@@ -32,10 +32,13 @@ http:
           - "POST"
           - "PUT"
           - "DELETE"
+          - "OPTIONS"
         accessControlAllowHeaders:
           - "Authorization"
           - "Content-Type"
         accessControlAllowCredentials: true
+        addVaryHeader: true
+
 
   services:
     tranceapi-service:

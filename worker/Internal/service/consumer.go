@@ -51,7 +51,7 @@ func (h *Handler) Jobprocesser(val any) error {
 	// 	return errors.New("failed to convert val to map")
 	// }
 
-	// // Manually map to your struct
+	//Manually map to your struct
 	// task := &Task{
 	// 	VideoID: val.Videoid, //m["Videoid"].(string),
 	// 	JobID:   m["Jobid"].(string),
@@ -61,6 +61,7 @@ func (h *Handler) Jobprocesser(val any) error {
 	// 	h.logger.Info("failed to convert val to *Task")
 	// 	return errors.New("failed to convert val to *Task")
 	// }
+
 	task := Task{
 		VideoID: "string",
 		JobID:   "Jobid",

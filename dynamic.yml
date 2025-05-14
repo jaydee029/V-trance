@@ -8,7 +8,7 @@ http:
         - auth-middleware
         - corsHeaders
     
-    user-router:  # 👈 new router for /user
+    user-router:  #  router for /user
       rule: "PathPrefix(`/user`)"
       entryPoints: ["web"]
       service: user-service
@@ -26,7 +26,7 @@ http:
     corsHeaders:
       headers:
         accessControlAllowOriginList:
-          - "http://localhost:3000"  # 🔁 change to your frontend origin
+          - "http://localhost:3000"  # frontend origin
         accessControlAllowMethods:
           - "GET"
           - "POST"
@@ -46,7 +46,7 @@ http:
         servers:
           - url: "http://localhost:8082/"
     
-    user-service:  # 👈 your actual user service
+    user-service:  # actual user service
       loadBalancer:
         servers:
           - url: "http://localhost:8081/"

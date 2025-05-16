@@ -6,15 +6,16 @@ http:
       service: tranceapi-service
       middlewares: 
         - auth-middleware
-        - corsHeaders
     
+    tranceapi-options:
+      rule: "Method(`OPTIONS`) && PathPrefix(`/tranceapi`)"
+      entryPoints: ["web"]
+      service: tranceapi-service
+
     user-router:  #  router for /user
       rule: "PathPrefix(`/user`)"
       entryPoints: ["web"]
       service: user-service
-      middlewares:
-        - corsHeaders
-
 
   middlewares:
     auth-middleware:
@@ -22,23 +23,6 @@ http:
         address: "http://localhost:8081/user/verify"
         trustForwardHeader: true
         authResponseHeaders: ["X-User-ID"]
-    
-    corsHeaders:
-      headers:
-        accessControlAllowOriginList:
-          - "http://localhost:3000"  # frontend origin
-        accessControlAllowMethods:
-          - "GET"
-          - "POST"
-          - "PUT"
-          - "DELETE"
-          - "OPTIONS"
-        accessControlAllowHeaders:
-          - "Authorization"
-          - "Content-Type"
-        accessControlAllowCredentials: true
-        addVaryHeader: true
-
 
   services:
     tranceapi-service:

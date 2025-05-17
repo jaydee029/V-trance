@@ -29,8 +29,8 @@ type Job struct {
 	Options           Options
 }
 
-type Transcoding struct {
-}
+// type Transcoding struct {
+// }
 
 type Dimension struct {
 	Height int

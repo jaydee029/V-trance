@@ -96,9 +96,9 @@ func main() {
 	s := chi.NewRouter()
 	r.Mount("/tranceapi", s)
 
-	s.Post("/upload-Url", handler.GetUploadUrl) // upload url
-	s.Post("/notifyUpload", handler.NotifyUpload)
+	//s.Post("/upload-Url", handler.GetUploadUrl) // upload url
 	s.Post("/uploadVideo", handler.UploadVideo)
+	s.Post("/notifyUpload", handler.NotifyUpload)
 	s.Get("/getVideos", handler.GetVideos)
 	s.Get("/jobStatus/{jobid}", handler.GetStatus)            // long polling
 	s.Get("/fetchVideo/{videoid}", handler.GetStreamUrl)      // stream url

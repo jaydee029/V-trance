@@ -34,16 +34,16 @@ type NotifyUploadResponse struct {
 	Jobid   pgtype.UUID `json:"jobid"`
 }
 
-type UploadUrlInput struct {
-	Name       string `json:"Name"`
-	Type       string `json:"type"` // type of the video
-	Resolution int    `json:"resolution"`
-}
+// type UploadUrlInput struct {
+// 	Name       string `json:"Name"`
+// 	Type       string `json:"type"` // type of the video
+// 	Resolution int    `json:"resolution"`
+// }
 
-type UploadUrlResponse struct {
-	Name      string      `json:"name"`
-	Videoid   pgtype.UUID `json:"videoid"`
-	UploadUrl string      `json:"uploadurl"`
+type UploadVideoResponse struct {
+	Name      string           `json:"name"`
+	Videoid   pgtype.UUID      `json:"videoid"`
+	CreatedAt pgtype.Timestamp `json:"createdat"`
 }
 
 type GetVideosResponse struct {

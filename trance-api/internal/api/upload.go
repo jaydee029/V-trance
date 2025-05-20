@@ -5,75 +5,76 @@ import (
 	"V-trance/trance-api/internal/utils"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/minio/minio-go/v7"
 	"go.uber.org/zap"
 )
 
-func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
+// func (h *Handler) GetUploadUrl(w http.ResponseWriter, r *http.Request) {
 
-	useridstr := r.Header.Get("X-User-ID")
-	decoder := json.NewDecoder(r.Body)
-	params := UploadUrlInput{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "couldn't decode parameters")
-		return
-	}
-	videoidstr := uuid.New().String()
+// 	useridstr := r.Header.Get("X-User-ID")
+// 	decoder := json.NewDecoder(r.Body)
+// 	params := UploadUrlInput{}
+// 	err := decoder.Decode(&params)
+// 	if err != nil {
+// 		respondWithError(w, http.StatusInternalServerError, "couldn't decode parameters")
+// 		return
+// 	}
+// 	videoidstr := uuid.New().String()
 
-	filename := h.Pathprefix + useridstr + "/" + videoidstr
-	expiry := time.Second * 60 * 15 // 15 minutes.
-	presignedURL, err := h.B2Client.PresignedPutObject(context.Background(), h.Bucket, filename, expiry)
+// 	filename := h.Pathprefix + useridstr + "/" + videoidstr
+// 	expiry := time.Second * 60 * 15 // 15 minutes.
+// 	presignedURL, err := h.B2Client.PresignedPutObject(context.Background(), h.Bucket, filename, expiry)
 
-	var videoid pgtype.UUID
+// 	var videoid pgtype.UUID
 
-	err = videoid.Scan(videoidstr)
-	if err != nil {
-		h.logger.Info("Error setting video UUID:", zap.Error(err))
-		return
-	}
+// 	err = videoid.Scan(videoidstr)
+// 	if err != nil {
+// 		h.logger.Info("Error setting video UUID:", zap.Error(err))
+// 		return
+// 	}
 
-	var timestamp pgtype.Timestamp
-	err = timestamp.Scan(time.Now().UTC())
-	if err != nil {
-		h.logger.Info("Error setting video creation timestamp:", zap.Error(err))
-		return
-	}
+// 	var timestamp pgtype.Timestamp
+// 	err = timestamp.Scan(time.Now().UTC())
+// 	if err != nil {
+// 		h.logger.Info("Error setting video creation timestamp:", zap.Error(err))
+// 		return
+// 	}
 
-	var userid pgtype.UUID
-	err = userid.Scan(useridstr)
-	if err != nil {
-		h.logger.Info("Error setting user UUID:", zap.Error(err))
-		return
-	}
+// 	var userid pgtype.UUID
+// 	err = userid.Scan(useridstr)
+// 	if err != nil {
+// 		h.logger.Info("Error setting user UUID:", zap.Error(err))
+// 		return
+// 	}
 
-	Response, err := h.DB.InsertInitialDetails(r.Context(), database.InsertInitialDetailsParams{
-		UserID:     userid,
-		Name:       params.Name,
-		Type:       params.Type,
-		Resolution: int32(params.Resolution),
-		VideoID:    videoid,
-		CreatedAt:  timestamp,
-	})
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error inserting details in the db: "+err.Error())
-		return
-	}
-	url := fmt.Sprintf("%s://%s%s?%s", presignedURL.Scheme, presignedURL.Host, presignedURL.Path, presignedURL.RawQuery)
+// 	Response, err := h.DB.InsertInitialDetails(r.Context(), database.InsertInitialDetailsParams{
+// 		UserID:     userid,
+// 		Name:       params.Name,
+// 		Type:       params.Type,
+// 		Resolution: int32(params.Resolution),
+// 		VideoID:    videoid,
+// 		CreatedAt:  timestamp,
+// 	})
+// 	if err != nil {
+// 		respondWithError(w, http.StatusInternalServerError, "error inserting details in the db: "+err.Error())
+// 		return
+// 	}
+// 	url := fmt.Sprintf("%s://%s%s?%s", presignedURL.Scheme, presignedURL.Host, presignedURL.Path, presignedURL.RawQuery)
 
-	respondWithJson(w, http.StatusAccepted, UploadUrlResponse{
-		Name:      Response.Name,
-		Videoid:   Response.VideoID,
-		UploadUrl: url,
-	})
+// 	respondWithJson(w, http.StatusAccepted, UploadUrlResponse{
+// 		Name:      Response.Name,
+// 		Videoid:   Response.VideoID,
+// 		UploadUrl: url,
+// 	})
 
-}
+// }
 
 func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 
@@ -244,11 +245,93 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) UploadVideo(w http.ResponseWriter, r *http.Request) {
 
-func (h *Handler)UploadVideo(w http.ResponseWriter,r *http.Request){
+	useridstr := r.Header.Get("X-User-ID")
 
-	err:=r.ParseMultipartForm(100<<20)
-	if err!=nil{
-		respondWithError()
+	err := r.ParseMultipartForm(100 << 20)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error setting memory limits: "+err.Error())
+		return
 	}
+
+	Name := r.FormValue("name")
+	Type := r.FormValue("type")
+	Resolutionstr := r.FormValue("resolution")
+	Resolution, err := strconv.Atoi(Resolutionstr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "error setting the resolution: "+err.Error())
+		return
+	}
+
+	videoidstr := uuid.New().String()
+
+	filename := h.Pathprefix + useridstr + "/" + videoidstr
+
+	file, handler, err := r.FormFile("video")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to read video: "+err.Error())
+		return
+	}
+	defer file.Close()
+
+	_, err = h.B2Client.PutObject(
+		context.Background(),
+		h.Bucket,
+		filename,
+		file,
+		handler.Size,
+		minio.PutObjectOptions{
+			ContentType: Type,
+			UserMetadata: map[string]string{
+				"title":       Name,
+				"description": "Unprocessed Video",
+			},
+		},
+	)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to upload video: "+err.Error())
+		return
+	}
+
+	var videoid pgtype.UUID
+
+	err = videoid.Scan(videoidstr)
+	if err != nil {
+		h.logger.Info("Error setting video UUID:", zap.Error(err))
+		return
+	}
+
+	var timestamp pgtype.Timestamp
+	err = timestamp.Scan(time.Now().UTC())
+	if err != nil {
+		h.logger.Info("Error setting video creation timestamp:", zap.Error(err))
+		return
+	}
+
+	var userid pgtype.UUID
+	err = userid.Scan(useridstr)
+	if err != nil {
+		h.logger.Info("Error setting user UUID:", zap.Error(err))
+		return
+	}
+
+	Response, err := h.DB.InsertInitialDetails(r.Context(), database.InsertInitialDetailsParams{
+		UserID:     userid,
+		Name:       Name,
+		Type:       Type,
+		Resolution: int32(Resolution),
+		VideoID:    videoid,
+		CreatedAt:  timestamp,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "error inserting details in the db: "+err.Error())
+		return
+	}
+
+	respondWithJson(w, http.StatusAccepted, UploadVideoResponse{
+		Name:      Response.Name,
+		Videoid:   Response.VideoID,
+		CreatedAt: timestamp,
+	})
 }

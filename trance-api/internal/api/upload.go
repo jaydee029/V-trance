@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jaydee029/V-trance/pubsub"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/minio/minio-go/v7"
@@ -173,7 +175,7 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	tx = nil
 
-	task := &Task{
+	task := pubsub.Task{
 		Videoid: job.VideoID.String(),
 		Jobid:   job.JobID.String(),
 	}
@@ -183,7 +185,8 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "coudn't publish the event:"+err.Error())
 		return
 	}
-	go func(task *Task) {
+
+	go func(task pubsub.Task) {
 		jobDetails, err := h.DB.FetchJob(context.Background(), database.FetchJobParams{
 			JobID:  jobid,
 			Status: JobKeyInitiated,

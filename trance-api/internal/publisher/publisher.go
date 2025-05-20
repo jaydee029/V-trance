@@ -20,7 +20,7 @@ type PbClient struct {
 	pubsub *pubsub.PubSub
 }
 
-func (pb *PbClient) PublishTask(exchange, key string, val any, logger *zap.Logger) error {
+func (pb *PbClient) PublishTask(exchange, key string, val pubsub.Task, logger *zap.Logger) error {
 	err := pb.pubsub.PublishGob(exchange, key, val)
 	if err != nil {
 		logger.Info("Error publish the event:", zap.Error(err))

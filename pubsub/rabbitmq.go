@@ -23,7 +23,7 @@ const (
 	NackDiscard
 )
 
-func (pb *PubSub) PublishGob(exchange, key string, val any) error {
+func (pb *PubSub) PublishGob(exchange, key string, val Task) error {
 	ch, err := pb.conn.Channel()
 
 	if err != nil {
@@ -72,18 +72,18 @@ func (pb *PubSub) DeclareAndBind(exchange, queueName, key string, simpleQueueTyp
 	return pubchannel, pubqueue, nil
 }
 
-func (pb *PubSub) SubscribeGob(exchange, queueName, key string, simpleQueueType QueueType, handler func(val any) Acktype) error {
+func (pb *PubSub) SubscribeGob(exchange, queueName, key string, simpleQueueType QueueType, handler func(val Task) Acktype) error {
 
-	return pb.subscribe(exchange, queueName, key, simpleQueueType, handler, func(msg []byte) (any, error) {
+	return pb.subscribe(exchange, queueName, key, simpleQueueType, handler, func(msg []byte) (Task, error) {
 		buffer := bytes.NewBuffer(msg)
 		decoder := gob.NewDecoder(buffer)
-		var data any
+		var data Task
 		err := decoder.Decode(&data)
 		return data, err
 	})
 }
 
-func (pb *PubSub) subscribe(exchange, queueName, key string, simpleQueueType QueueType, handler func(val any) Acktype, unmarshaller func([]byte) (any, error)) error {
+func (pb *PubSub) subscribe(exchange, queueName, key string, simpleQueueType QueueType, handler func(val Task) Acktype, unmarshaller func([]byte) (Task, error)) error {
 
 	subch, queue, err := pb.DeclareAndBind(exchange, queueName, key, simpleQueueType)
 

@@ -4,6 +4,7 @@ import (
 	"V-trance/worker/Internal/database"
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -17,7 +18,7 @@ func (h *Handler) EventListner(ctx context.Context, wg *sync.WaitGroup) {
 	sem := semaphore.NewWeighted(10)
 	//var wg sync.WaitGroup
 
-	err := h.Pb.SubscribeGob(h.Exchange, "jobs_queue", h.key, pubsub.DurableQueue, func(val any) pubsub.Acktype {
+	err := h.Pb.SubscribeGob(h.Exchange, "jobs_queue", h.key, pubsub.DurableQueue, func(val pubsub.Task) pubsub.Acktype {
 
 		if err := sem.Acquire(ctx, 1); err != nil {
 			h.logger.Info("Failed to acquire semaphore: ", zap.Error(err))
@@ -25,7 +26,7 @@ func (h *Handler) EventListner(ctx context.Context, wg *sync.WaitGroup) {
 		}
 
 		wg.Add(1)
-		go func(task any) {
+		go func(task pubsub.Task) {
 			defer sem.Release(1)
 			defer wg.Done()
 
@@ -44,7 +45,7 @@ func (h *Handler) EventListner(ctx context.Context, wg *sync.WaitGroup) {
 	//wg.Wait()
 }
 
-func (h *Handler) Jobprocesser(val any) error {
+func (h *Handler) Jobprocesser(val pubsub.Task) error {
 	// m, ok := val.(map[string]interface{})
 	// if !ok {
 	// 	h.logger.Info("failed to convert val to map")
@@ -62,13 +63,15 @@ func (h *Handler) Jobprocesser(val any) error {
 	// 	return errors.New("failed to convert val to *Task")
 	// }
 
-	task := Task{
-		VideoID: "string",
-		JobID:   "Jobid",
-	}
+	// task := Task{
+	// 	VideoID: "string",
+	// 	JobID:   "Jobid",
+	// }
 	var jobid pgtype.UUID
 
-	err := jobid.Scan(task.JobID)
+	err := jobid.Scan(val.Jobid)
+
+	fmt.Println(jobid)
 
 	if err != nil {
 		h.logger.Info("error converting jobid to pgtype", zap.Error(err))

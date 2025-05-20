@@ -243,3 +243,12 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 		Jobid:   job.JobID,
 	})
 }
+
+
+func (h *Handler)UploadVideo(w http.ResponseWriter,r *http.Request){
+
+	err:=r.ParseMultipartForm(100<<20)
+	if err!=nil{
+		respondWithError()
+	}
+}

@@ -1,0 +1,3 @@
+[submodule "vtrance-frontend"]
+	path = vtrance-frontend
+	url = https://github.com/kashvigarg/vtrance-frontend.git

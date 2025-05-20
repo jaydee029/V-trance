@@ -98,6 +98,7 @@ func main() {
 
 	s.Post("/upload-Url", handler.GetUploadUrl) // upload url
 	s.Post("/notifyUpload", handler.NotifyUpload)
+	s.Post("/uploadVideo", handler.UploadVideo)
 	s.Get("/getVideos", handler.GetVideos)
 	s.Get("/jobStatus/{jobid}", handler.GetStatus)            // long polling
 	s.Get("/fetchVideo/{videoid}", handler.GetStreamUrl)      // stream url

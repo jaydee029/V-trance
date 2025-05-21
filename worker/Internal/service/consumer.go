@@ -46,27 +46,7 @@ func (h *Handler) EventListner(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (h *Handler) Jobprocesser(val pubsub.Task) error {
-	// m, ok := val.(map[string]interface{})
-	// if !ok {
-	// 	h.logger.Info("failed to convert val to map")
-	// 	return errors.New("failed to convert val to map")
-	// }
-
-	//Manually map to your struct
-	// task := &Task{
-	// 	VideoID: val.Videoid, //m["Videoid"].(string),
-	// 	JobID:   m["Jobid"].(string),
-	// }
-	// task, ok := val.(*Task)
-	// if !ok {
-	// 	h.logger.Info("failed to convert val to *Task")
-	// 	return errors.New("failed to convert val to *Task")
-	// }
-
-	// task := Task{
-	// 	VideoID: "string",
-	// 	JobID:   "Jobid",
-	// }
+	
 	var jobid pgtype.UUID
 
 	err := jobid.Scan(val.Jobid)
@@ -121,7 +101,7 @@ func (h *Handler) Jobprocesser(val pubsub.Task) error {
 		})
 		return err
 	}
-	_, _ = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+	h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
 		Status: JobKeyCompleted,
 		JobID:  jobid,
 	})

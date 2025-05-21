@@ -5,7 +5,6 @@ import (
 	"V-trance/trance-api/internal/utils"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -186,58 +185,58 @@ func (h *Handler) NotifyUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func(task pubsub.Task) {
-		jobDetails, err := h.DB.FetchJob(context.Background(), database.FetchJobParams{
-			JobID:  jobid,
-			Status: JobKeyInitiated,
-		})
-		if err != nil {
-			h.logger.Info("error fetching the job from the db:", zap.Error(err))
-		}
-		var opts Options
-		err = json.Unmarshal(jobDetails.Options, &opts)
-		if err != nil {
-			h.logger.Info("error unmarshalling options:", zap.Error(err))
-		}
-		videoDetails, err := h.DB.FetchVideo(context.Background(), jobDetails.VideoID)
-		if err != nil {
-			h.logger.Info("error fetching the video from the db:", zap.Error(err))
-		}
+	// go func(task pubsub.Task) {
+	// 	jobDetails, err := h.DB.FetchJob(context.Background(), database.FetchJobParams{
+	// 		JobID:  jobid,
+	// 		Status: JobKeyInitiated,
+	// 	})
+	// 	if err != nil {
+	// 		h.logger.Info("error fetching the job from the db:", zap.Error(err))
+	// 	}
+	// 	var opts Options
+	// 	err = json.Unmarshal(jobDetails.Options, &opts)
+	// 	if err != nil {
+	// 		h.logger.Info("error unmarshalling options:", zap.Error(err))
+	// 	}
+	// 	videoDetails, err := h.DB.FetchVideo(context.Background(), jobDetails.VideoID)
+	// 	if err != nil {
+	// 		h.logger.Info("error fetching the video from the db:", zap.Error(err))
+	// 	}
 
-		jobd := &Job{
-			Type:              jobDetails.Type,
-			VideoId:           jobDetails.VideoID,
-			UserId:            videoDetails.UserID,
-			VideoUrl:          videoDetails.VideoUrl.String,
-			InitialResolution: int(videoDetails.Resolution),
-			Options:           opts,
-		}
+	// 	jobd := &Job{
+	// 		Type:              jobDetails.Type,
+	// 		VideoId:           jobDetails.VideoID,
+	// 		UserId:            videoDetails.UserID,
+	// 		VideoUrl:          videoDetails.VideoUrl.String,
+	// 		InitialResolution: int(videoDetails.Resolution),
+	// 		Options:           opts,
+	// 	}
 
-		_, err = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
-			Status: JobKeyProcessing,
-			JobID:  jobid,
-		})
-		if err != nil {
-			h.logger.Info("error setting status to processing:", zap.Error(err))
-		}
+	// 	_, err = h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+	// 		Status: JobKeyProcessing,
+	// 		JobID:  jobid,
+	// 	})
+	// 	if err != nil {
+	// 		h.logger.Info("error setting status to processing:", zap.Error(err))
+	// 	}
 
-		err = h.ProcessVideo(jobd)
+	// 	err = h.ProcessVideo(jobd)
 
-		if err != nil {
-			h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
-				Status: JobKeyRejected,
-				JobID:  jobid,
-			})
-			log.Printf("error processing video:%v", err)
-			return
-			//return err
-		}
-		h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
-			Status: JobKeyCompleted,
-			JobID:  jobid,
-		})
-		return
-	}(task)
+	// 	if err != nil {
+	// 		h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+	// 			Status: JobKeyRejected,
+	// 			JobID:  jobid,
+	// 		})
+	// 		log.Printf("error processing video:%v", err)
+	// 		return
+	// 		//return err
+	// 	}
+	// 	h.DB.SetStatusJob(context.Background(), database.SetStatusJobParams{
+	// 		Status: JobKeyCompleted,
+	// 		JobID:  jobid,
+	// 	})
+	// 	return
+	// }(task)
 
 	//return nil
 

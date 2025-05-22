@@ -10,7 +10,7 @@ UPDATE videos SET Video_url=$1 WHERE Video_id=$2 RETURNING Name, Video_id;
 
 -- name: GetVideos :many
 SELECT Name, Stream_url FROM videos 
-WHERE User_id=$1 AND Type='STREAMING' AND Stream_url IS NOT NULL AND Stream_url != ''; 
+WHERE User_id=$1 AND Type='STREAMING'; 
 
 -- name: GetStreamurl :one
 SELECT Name, Stream_url FROM videos WHERE User_id=$1 AND Video_id=$2;

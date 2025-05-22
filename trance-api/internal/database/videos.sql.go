@@ -57,7 +57,7 @@ func (q *Queries) GetStreamurl(ctx context.Context, arg GetStreamurlParams) (Get
 
 const getVideos = `-- name: GetVideos :many
 SELECT Name, Stream_url FROM videos 
-WHERE User_id=$1 AND Type='STREAMING' AND Stream_url IS NOT NULL AND Stream_url != ''
+WHERE User_id=$1 AND Type='STREAMING'
 `
 
 type GetVideosRow struct {

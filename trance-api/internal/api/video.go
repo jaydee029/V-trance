@@ -70,7 +70,7 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if job.Status == JobKeyRejected {
-				respondWithJson(w, http.StatusBadRequest, GetStatusResponse{
+				respondWithJson(w, http.StatusOK, GetStatusResponse{
 					Name:    job.Name,
 					Videoid: job.VideoID,
 					Status:  JobKeyRejected,

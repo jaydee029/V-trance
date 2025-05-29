@@ -1,10 +1,9 @@
-# V-trance
+# <img src="https://github.com/user-attachments/assets/b43ff8bc-ab93-4f09-9860-921b32f4bcf2" width="50px"> V-trance
 V-Trance is a cost effective video transcoding and on demand streaming platform leveraging event driven architecture and microservices for scalable, asynchronous processing. It performs transcoding and/or stream creation, enabling multi format video output optimized for web delivery and adaptive bitrate streaming. 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/93f7ba84-b1d4-46e7-a923-43e8c61650f2" alt="First Image" style="width:46%; display:inline-block;"/>
   <img src="https://github.com/user-attachments/assets/27b4d0cf-f420-44eb-9453-43ba77b203a8" alt="Second Image" style="width:52%; display:inline-block;"/>
 </p>
-
 
 ## Problem Statement & Introduction
 Most existing services offered by cloud providers like AWS Elemental MediaConvert, Azure Media Services, or specialized platforms like Mux offer high-quality transcoding

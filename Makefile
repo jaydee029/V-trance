@@ -4,13 +4,17 @@ build:
 	@cd worker/cmd && go build -o worker
 
 run: build
-	@./scripts/rabbit.sh start && cd user/cmd && ./user & \
-	cd trance-api/cmd && ./tranceapi & \
-	cd worker/cmd && ./worker
+	@./scripts/rabbit.sh start
+	@bash -c 'cd user/cmd && ./user &' \
+	&& sleep 7 \
+	&& bash -c 'cd trance-api/cmd && ./tranceapi &' \
+	&& sleep 5 \
+	&& bash -c 'cd worker/cmd && ./worker &'
+	@echo "All services started with delays."
 
 clean:
-	@./scripts/rabbit.sh stop
-	@pkill -f ./user || true
-	@pkill -f ./tranceapi || true
-	@pkill -f ./worker || true
-	@echo "Stopped all services."
+	@./scripts/rabbit.sh stop 
+	@pkill -f ./tranceapi
+	@pkill -f ./user
+	@pkill -f ./worker
+	echo "services cleaned"

@@ -3,3 +3,4 @@ traefik
 user/cmd/user
 trance-api/cmd/tranceapi
 worker/cmd/worker
+traefik.tar.gz
